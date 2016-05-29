@@ -1,4 +1,43 @@
-require(["jquery", "histmap", "bootstrap"], function($, ol) {//"css!bootstrapcss", "css!ol3css"], function($, ol, tps) {
+require(["jquery", "histmap", "worker!stroly_loader.js", "x2js", "bootstrap"], function($, ol, stroly, X2JS) {//"css!bootstrapcss", "css!ol3css"], function($, ol, tps) {
+    var callBacks = {};
+    var accessStroly = function () {
+        var promises = [];
+        ["_ATRP_Hiroshima_Jokaezu_1713","_KYGKD_1340417644"].forEach(function(mapID){
+            var promise = new Promise(function(resolve, reject) {
+                callBacks[mapID] = [resolve, reject];
+                stroly.postMessage({method:'stroly',args:{mapID:mapID}});
+            });
+            promises.push(promise);
+        });
+        Promise.all(promises).then(function(results){
+            console.log("Promise works well!");
+            console.log(results);
+        });
+    };
+
+    var x2js = new X2JS();
+    stroly.onmessage = function(e) {
+        var data   = e.data;
+        var method = data.method;
+        var args   = data.args;
+
+        switch (method){
+            case 'ready':
+                console.log("Ready");
+                accessStroly();
+                break;
+            case 'domwork':
+                var json = x2js.xml_str2json(args.content);
+                stroly.postMessage({method:'domresult',args:{json:JSON.stringify(json, null, "  "),mapID:args.mapID}});
+                break;
+            case 'result':
+                var mapID = args.mapID;
+                var resolve = callBacks[mapID][0];
+                callBacks[mapID] = null;
+                resolve(args.json);
+        }
+    };
+
     var app_json = "json/" + appid + ".json";
     $.get(app_json, function(app_data) {
         $("#all").show();

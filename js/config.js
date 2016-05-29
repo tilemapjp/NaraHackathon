@@ -13,7 +13,8 @@ require.config({
         //"ol3css" : "../css/ol",
         "bootstrap" : "//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min",
         //"bootstrapcss" : "//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min",
-        "tps" : "thinplatespline"
+        "tps" : "thinplatespline",
+        "x2js" : "xml2json.min"
     },
     shim: {
         'jquery' : {
@@ -22,7 +23,7 @@ require.config({
         'jui' : { 
             deps: ['jquery'] 
         },
-        'ol' : {
+        'ol3' : {
             exports: 'ol'
         },
         'tps' : {
@@ -30,6 +31,9 @@ require.config({
         },
         'bootstrap' : { 
             deps: ['jquery'] 
-        }
+        }/*,
+        "x2js" : {
+            exports: 'X2JS'
+        }*/
     }
 });
