@@ -1,3 +1,17 @@
+/*        {
+ "mapID" : "_ATRP_Hiroshima_Jokaezu_1713",
+ "stroly" : true,
+ "year" : 1713
+ },
+ {
+ "mapID" : "_ATRP_Hiroshima_Meisaizu_1939",
+ "stroly" : true,
+ "year" : 1939
+ },{
+ "mapID" : "_ATRP_Hiroshima_Ebyoubu_1804_1",
+ "stroly" : true,
+ "year" : 1804
+ },*/
 require(["jquery", "histmap", "worker!stroly_loader.js", "x2js", "bootstrap"], function($, ol, stroly, X2JS) {//"css!bootstrapcss", "css!ol3css"], function($, ol, tps) {
     var callBacks = {};
     var x2js = new X2JS({keepCData:false});
@@ -8,8 +22,6 @@ require(["jquery", "histmap", "worker!stroly_loader.js", "x2js", "bootstrap"], f
 
         switch (method){
             case 'ready':
-                console.log("Ready");
-                accessStroly();
                 break;
             case 'domwork':
                 var json = x2js.xml_str2json(args.content.replace(/xml:lang/g,"lang"));
@@ -71,75 +83,86 @@ require(["jquery", "histmap", "worker!stroly_loader.js", "x2js", "bootstrap"], f
         var dataHash = {};
 
         var sourcePromise = [];
-        for (var i = 0; i <= dataSource.length; i++) {
-            var div = "map" + i;
-            if (i == dataSource.length) {
-                sourcePromise.push(ol.source.nowMap.createAsync({
-                    map_option: {
-                        div: div
-                    },
-                    gps_callback: gps_callback,
-                    home_callback: home_callback
-                }));
-                $("#era_select").append('<option value="' + now_year + '" selected>' + now_era + '</option>');
-            } else {
-                var data = dataSource[i];
-                dataHash[data.year] = data;
-                if (data.stroly) {
-                    var promise = new Promise(function(resolve, reject) {
-                        callBacks[mapID] = [resolve, reject];
-                        stroly.postMessage({method:'stroly',args:{mapID:data.mapID}});
-                    }).then(function(stroly_data){
+        for (var idx = 0; idx <= dataSource.length; idx++) {
+            (function(i){
+                var div = "map" + i;
+                if (i == dataSource.length) {
+                    sourcePromise.push(ol.source.nowMap.createAsync({
+                        map_option: {
+                            div: div
+                        },
+                        gps_callback: gps_callback,
+                        home_callback: home_callback
+                    }));
+                } else {
+                    var data = dataSource[i];
+                    dataHash[data.year] = data;
+                    if (data.stroly) {
+                        var promise = new Promise(function(resolve, reject) {
+                            callBacks[data.mapID] = [resolve, reject];
+                            stroly.postMessage({method:'stroly',args:{mapID:data.mapID}});
+                        }).then(function(stroly_data){
+                                data.era = stroly_data.title;
+                                var option = {
+                                    attributions: [
+                                        new ol.Attribution({
+                                            html: ""
+                                        })
+                                    ],
+                                    mapID: stroly_data.mapID,
+                                    width: stroly_data.wh[0],
+                                    height: stroly_data.wh[1],
+                                    stroly: true,
+                                    map_option: {
+                                        div: div
+                                    },
+                                    gps_callback: gps_callback,
+                                    home_callback: home_callback
+                                };
+                                option.tps_points = 'data:application/json;charset=utf-8,' +
+                                encodeURIComponent(JSON.stringify(stroly_data.points));
+                                return ol.source.histMap.createAsync(option);
+                            });
+                        sourcePromise.push(promise);
+                    } else {
                         var option = {
                             attributions: [
                                 new ol.Attribution({
-                                    html: ""
+                                    html: data.attr
                                 })
                             ],
-                            mapID: stroly_data.mapID,
-                            width: stroly_data.wh[0],
-                            height: stroly_data.wh[1],
+                            mapID: data.mapID,
+                            width: data.width,
+                            height: data.height,
                             map_option: {
                                 div: div
                             },
                             gps_callback: gps_callback,
                             home_callback: home_callback
                         };
-                        option.tps_points = 'data:application/json;charset=utf-8,' +
-                            encodeURIComponent(JSON.stringify(stroly_data.points));
-                        return ol.source.histMap.createAsync(option);
-                    });
-                    sourcePromise.push(promise);
-                } else {
-                    var option = {
-                        attributions: [
-                            new ol.Attribution({
-                                html: data.attr
-                            })
-                        ],
-                        mapID: data.mapID,
-                        width: data.width,
-                        height: data.height,
-                        map_option: {
-                            div: div
-                        },
-                        gps_callback: gps_callback,
-                        home_callback: home_callback
-                    };
-                    if (make_binary) {
-                        option.tps_serial = data.mapID + ".bin";
-                        option.tps_points = '../json/' + data.mapID + '_points.json';
-                    } else {
-                        option.tps_serial = '../bin/' + data.mapID + '.bin';
+                        if (make_binary) {
+                            option.tps_serial = data.mapID + ".bin";
+                            option.tps_points = '../json/' + data.mapID + '_points.json';
+                        } else {
+                            option.tps_serial = '../bin/' + data.mapID + '.bin';
+                        }
+                        sourcePromise.push(ol.source.histMap.createAsync(option));
                     }
-                    sourcePromise.push(ol.source.histMap.createAsync(option));
                 }
-                $("#era_select").append('<option value="' + data.year + '">' + data.era + '</option>');
-            }
-            $(".mainview").append('<div id="' + div + 'container" class="col-xs-12 h100p mapcontainer"><div id="' + div + '" class="map h100p"></div></div>');
+                $(".mainview").append('<div id="' + div + 'container" class="col-xs-12 h100p mapcontainer"><div id="' + div + '" class="map h100p"></div></div>');
+            })(idx);
         }
 
         Promise.all(sourcePromise).then(function(sources) {
+            console.log(sources);
+            console.log(dataSource);
+            for (var i = 0; i <= dataSource.length; i++) {
+                $("#era_select").append(
+                    i == dataSource.length ?
+                    '<option value="' + now_year + '" selected>' + now_era + '</option>' :
+                    '<option value="' + dataSource[i].year + '">' + dataSource[i].era + '</option>'
+                );
+            }
             $('#loadWait').modal('hide');
 
             var cache = [];
@@ -246,7 +269,7 @@ require(["jquery", "histmap", "worker!stroly_loader.js", "x2js", "bootstrap"], f
                     var layer = new ol.layer.Tile({
                         source: new ol.source.XYZ({
                             url: data.stroly ?
-                                '' :
+                                'http://css3.illustmap.org/tiles/' + data.mapID + '/' + data.mapID + '-{z}_{x}_{-y}.png' :
                                 'tiles/' + data.mapID + '_' + type + '/{z}/{x}/{-y}.png'
                         })
                     });

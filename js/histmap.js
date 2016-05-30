@@ -17,7 +17,9 @@ define(["ol-custom", "tps"], function(ol, ThinPlateSpline) {
         options.wrapX = false;
         if (options.mapID) {
             this.mapID = options.mapID
-            options.url = 'tiles/' + options.mapID + '-{z}_{x}_{y}.jpg';
+            options.url = options.stroly ?
+                'http://css3.illustmap.org/tiles/' + options.mapID + '/' + options.mapID + '-{z}_{x}_{-y}.jpg' :
+                'tiles/' + options.mapID + '-{z}_{x}_{y}.jpg';
         }
 
         if (options.urls) {

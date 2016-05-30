@@ -9,18 +9,6 @@
     "now_era" : "現在",
     "sources" : [
         {
-            "mapID" : "_ATRP_Hiroshima_Jokaezu_1713",
-            "stroly" : true,
-            "year" : 1713
-        },{
-            "mapID" : "_ATRP_Hiroshima_Ebyoubu_1804_1",
-            "stroly" : true,
-            "year" : 1804
-        },{
-            "mapID" : "_ATRP_Hiroshima_Meisaizu_1939",
-            "stroly" : true,
-            "year" : 1939
-        },{
             "mapID" : "_ATRP_Hiroshima_nakakumap_2007",
             "stroly" : true,
             "year" : 2007
