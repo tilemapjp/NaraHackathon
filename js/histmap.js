@@ -115,7 +115,7 @@ define(["ol-custom", "tps"], function(ol, ThinPlateSpline) {
         var promise = new Promise(function(resolve, reject) {
             var obj;
             options.on_serialized = function() {
-                if (options.tps_points) {
+                if (options.tps_points && options.tps_serial) {
                     var a = document.createElement("a");
                     document.body.appendChild(a);
                     a.style = "display: none";
